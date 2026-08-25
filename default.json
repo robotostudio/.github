@@ -1,0 +1,94 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Roboto Studio dependency policy. Repos extend this LAST so it wins over vendor presets: extends: [..., \"local>robotostudio/.github\"].",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits"
+  ],
+  "timezone": "Europe/London",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "rangeStrategy": "bump",
+  "postUpdateOptions": [
+    "pnpmDedupe"
+  ],
+  "rebaseWhen": "behind-base-branch",
+  "minimumReleaseAge": "5 days",
+  "dependencyDashboard": true,
+  "addLabels": [
+    "dependencies"
+  ],
+  "configMigration": true,
+  "vulnerabilityAlerts": {
+    "description": "Dependabot owns CVEs. Off here so both bots don't file for the same one.",
+    "enabled": false
+  },
+  "lockFileMaintenance": {
+    "description": "Weekly lockfile refresh. This is what stops PRs rotting into conflicts.",
+    "enabled": true,
+    "automerge": true,
+    "schedule": [
+      "before 6am on monday"
+    ]
+  },
+  "packageRules": [
+    {
+      "description": "Everything non-major in one PR, merged by the bot on green CI. `bump` and `lockfileUpdate` are listed because rangeStrategy:bump produces them.",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest",
+        "bump",
+        "lockfileUpdate"
+      ],
+      "groupName": "non-major",
+      "automerge": true
+    },
+    {
+      "description": "Actions move together, separately from npm.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github-actions",
+      "automerge": true
+    },
+    {
+      "description": "Majors raise their own PR for review. Never auto-merged.",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Framework core moves in lockstep and gets human eyes. minimumReleaseAge is re-asserted because sanity-io's min-age-exceptions preset zeroes it for these exact packages.",
+      "matchPackageNames": [
+        "next",
+        "react",
+        "react-dom",
+        "react-is"
+      ],
+      "groupName": "framework",
+      "automerge": false,
+      "minimumReleaseAge": "5 days"
+    },
+    {
+      "description": "CMS client libraries: one PR, human eyes. No-op in repos without them.",
+      "matchPackageNames": [
+        "sanity",
+        "@sanity/**",
+        "next-sanity",
+        "sanity-plugin-**",
+        "@portabletext/**",
+        "contentful",
+        "contentful-**",
+        "@contentful/**"
+      ],
+      "groupName": "cms",
+      "automerge": false,
+      "minimumReleaseAge": "5 days"
+    }
+  ],
+  "separateMultipleMajor": false
+}
