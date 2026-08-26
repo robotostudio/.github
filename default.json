@@ -3,7 +3,8 @@
   "description": "Roboto Studio dependency policy. Repos extend this LAST so it wins over vendor presets: extends: [..., \"local>robotostudio/.github\"].",
   "extends": [
     "config:recommended",
-    ":semanticCommits"
+    ":semanticCommits",
+    ":automergeRequireAllStatusChecks"
   ],
   "timezone": "Europe/London",
   "schedule": [
@@ -14,7 +15,8 @@
     "pnpmDedupe"
   ],
   "rebaseWhen": "behind-base-branch",
-  "minimumReleaseAge": "5 days",
+  "platformAutomerge": false,
+  "minimumReleaseAge": "7 days",
   "dependencyDashboard": true,
   "addLabels": [
     "dependencies"
@@ -25,16 +27,16 @@
     "enabled": false
   },
   "lockFileMaintenance": {
-    "description": "Weekly lockfile refresh. This is what stops PRs rotting into conflicts.",
+    "description": "Weekly lockfile refresh, which is what stops PRs rotting into conflicts. Not auto-merged: Renovate delegates it to the package manager, so minimumReleaseAge cannot apply and it could pull a package published minutes ago.",
     "enabled": true,
-    "automerge": true,
+    "automerge": false,
     "schedule": [
       "before 6am on monday"
     ]
   },
   "packageRules": [
     {
-      "description": "Everything non-major in one PR, merged by the bot on green CI. `bump` and `lockfileUpdate` are listed because rangeStrategy:bump produces them.",
+      "description": "Everything non-major in one PR, merged by the bot on green CI. minimumReleaseAge is re-asserted here because sanity-io's min-age-exceptions preset zeroes it for @types/*, @next/*, pnpm and others that ride this group. `bump` and `lockfileUpdate` are listed because rangeStrategy:bump produces them.",
       "matchUpdateTypes": [
         "minor",
         "patch",
@@ -44,22 +46,49 @@
         "lockfileUpdate"
       ],
       "groupName": "non-major",
-      "automerge": true
+      "automerge": true,
+      "minimumReleaseAge": "7 days"
     },
     {
-      "description": "Actions move together, separately from npm.",
+      "description": "Pre-1.0 packages: semver gives no compatibility guarantee below 1.0, so a minor bump can break. Own group, because one non-automerge member would disable automerge for the whole grouped PR.",
+      "matchCurrentVersion": "<1.0.0",
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "groupName": "pre-1.0",
+      "automerge": false
+    },
+    {
+      "description": "CI workflow definitions move together, separately from npm. Non-major only; majors fall through to the majors rule.",
       "matchManagers": [
         "github-actions"
       ],
       "groupName": "github-actions",
-      "automerge": true
+      "automerge": true,
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin"
+      ]
+    },
+    {
+      "description": "Anything defining the contract with a consumer or the runtime. Breaking these breaks downstream, so a person reads the changelog.",
+      "matchDepTypes": [
+        "peerDependencies",
+        "engines",
+        "packageManager"
+      ],
+      "groupName": null,
+      "automerge": false
     },
     {
       "description": "Majors raise their own PR for review. Never auto-merged.",
       "matchUpdateTypes": [
         "major"
       ],
-      "automerge": false
+      "automerge": false,
+      "groupName": null
     },
     {
       "description": "Framework core moves in lockstep and gets human eyes. minimumReleaseAge is re-asserted because sanity-io's min-age-exceptions preset zeroes it for these exact packages.",
@@ -71,23 +100,27 @@
       ],
       "groupName": "framework",
       "automerge": false,
-      "minimumReleaseAge": "5 days"
+      "minimumReleaseAge": "7 days"
     },
     {
-      "description": "CMS client libraries: one PR, human eyes. No-op in repos without them.",
+      "description": "The surfaces a type check cannot vouch for: the Studio itself, the data/preview wiring, and Presentation. Everything else Sanity ships is a library that fails compilation when it breaks, so it rides the auto-merged group - which is also sanity-io's own posture. minimumReleaseAge is re-asserted because their min-age-exceptions preset zeroes it here.",
       "matchPackageNames": [
         "sanity",
-        "@sanity/**",
         "next-sanity",
-        "sanity-plugin-**",
-        "@portabletext/**",
+        "@sanity/visual-editing",
         "contentful",
-        "contentful-**",
-        "@contentful/**"
+        "@contentful/live-preview"
       ],
       "groupName": "cms",
       "automerge": false,
-      "minimumReleaseAge": "5 days"
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "Re-assert the org soak LAST so it survives any ecosystem preset that zeroes minimumReleaseAge for its own packages.",
+      "matchPackageNames": [
+        "*"
+      ],
+      "minimumReleaseAge": "7 days"
     }
   ],
   "separateMultipleMajor": false
