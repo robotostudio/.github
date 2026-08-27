@@ -36,7 +36,7 @@
   },
   "packageRules": [
     {
-      "description": "Everything non-major in one PR, merged by the bot on green CI. minimumReleaseAge is re-asserted here because sanity-io's min-age-exceptions preset zeroes it for @types/*, @next/*, pnpm and others that ride this group. `bump` and `lockfileUpdate` are listed because rangeStrategy:bump produces them.",
+      "description": "Everything non-major in one PR, merged by the bot on green CI. minimumReleaseAge is re-asserted because sanity-io's min-age-exceptions preset zeroes it for @types/*, @next/*, pnpm and others that ride this group. `bump` and `lockfileUpdate` come from rangeStrategy:bump.",
       "matchUpdateTypes": [
         "minor",
         "patch",
@@ -56,6 +56,7 @@
         "minor"
       ],
       "groupName": "pre-1.0",
+      "dependencyDashboardApproval": true,
       "automerge": false
     },
     {
@@ -80,15 +81,8 @@
         "packageManager"
       ],
       "groupName": null,
+      "dependencyDashboardApproval": true,
       "automerge": false
-    },
-    {
-      "description": "Majors raise their own PR for review. Never auto-merged.",
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "automerge": false,
-      "groupName": null
     },
     {
       "description": "Framework core moves in lockstep and gets human eyes. minimumReleaseAge is re-asserted because sanity-io's min-age-exceptions preset zeroes it for these exact packages.",
@@ -99,11 +93,12 @@
         "react-is"
       ],
       "groupName": "framework",
+      "dependencyDashboardApproval": true,
       "automerge": false,
       "minimumReleaseAge": "7 days"
     },
     {
-      "description": "The surfaces a type check cannot vouch for: the Studio itself, the data/preview wiring, and Presentation. Everything else Sanity ships is a library that fails compilation when it breaks, so it rides the auto-merged group - which is also sanity-io's own posture. minimumReleaseAge is re-asserted because their min-age-exceptions preset zeroes it here.",
+      "description": "The surfaces a type check cannot vouch for: the Studio, the data/preview wiring, and Presentation. Everything else Sanity ships fails compilation when it breaks, so it rides the auto-merged group, which is sanity-io's own posture. minimumReleaseAge is re-asserted because their min-age-exceptions preset zeroes it here.",
       "matchPackageNames": [
         "sanity",
         "next-sanity",
@@ -112,8 +107,25 @@
         "@contentful/live-preview"
       ],
       "groupName": "cms",
+      "dependencyDashboardApproval": true,
       "automerge": false,
       "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "Majors are breaking by definition, so a person opens them: they wait on the dependency dashboard until someone ticks the box, then raise their own PR. Never auto-merged. Placed after the framework and cms rules so groupName:null wins, otherwise a major would be bundled into those groups alongside minors.",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true,
+      "automerge": false,
+      "groupName": null
+    },
+    {
+      "description": "TypeScript 7 tightened ambient Node global resolution, so every workspace package needs \"types\": [\"node\"] before it compiles. That is a migration, not a bump. Lift this cap once it lands.",
+      "matchPackageNames": [
+        "typescript"
+      ],
+      "allowedVersions": "<7"
     },
     {
       "description": "Re-assert the org soak LAST so it survives any ecosystem preset that zeroes minimumReleaseAge for its own packages.",
